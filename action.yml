@@ -1,0 +1,27 @@
+name: 'Notion release'
+description: 'Creates a new page in an existing database to capture release notes'
+branding:
+  icon: type
+  color: white
+inputs:
+  token:
+    description: 'Notion API token'
+    required: true    
+  database:
+    description: 'Parent database to add to'
+    required: true    
+  name:
+    description: 'Name for the release'
+    required: true
+  body:  
+    description: 'Body content for release notes'
+    required: true
+  tags:  
+    description: 'Comma separated tag list'
+    required: false
+outputs:
+  url:
+    description: 'The URL of the created page'
+runs:
+  using: 'node24'
+  main: 'dist/index.js'

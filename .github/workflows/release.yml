@@ -1,0 +1,74 @@
+name: release
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: 'release'
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    outputs:
+      version: ${{ steps.release.outputs.version }}
+      tag: ${{ steps.release.outputs.tag }}
+      name: ${{ steps.release.outputs.name }}
+      url: ${{ steps.release.outputs.url }}
+      body: ${{ steps.release.outputs.body }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: get release version
+        id: initial-release
+        run: |
+          echo "version=$(jq -r '.version' package.json)" >> $GITHUB_OUTPUT
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: 'npm'
+      - run: npm i
+      - run: npm run package
+      - run: npx semantic-release
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      - name: release info
+        id: release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="$(jq -r '.version' package.json)"
+          if [ "$VERSION" != "${{ steps.initial-release.outputs.version }}" ]; then
+            JSON="$(gh release view --json name,body,tagName,url)"
+            {
+              echo "version=$VERSION"
+              echo "tag=$(echo "$JSON" | jq -r '.tagName')"
+              echo "name=$(echo "$JSON" | jq -r '.name')"
+              echo "url=$(echo "$JSON" | jq -r '.url')"
+              echo "body<<EOF"
+              echo "$(echo "$JSON" | jq -r '.body')"
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
+          fi
+
+  notion:
+    needs:
+      - release
+    if: ${{ needs.release.outputs.version != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./
+        id: notion
+        with:
+          token: ${{ secrets.NOTION_TOKEN }}
+          database: ${{ secrets.NOTION_DATABASE_ID }}
+          name: Notion Release ${{ needs.release.outputs.version }}
+          tags: utils
+          body: ${{ needs.release.outputs.body }}
+      - run: echo "${{ steps.notion.outputs.url }}"

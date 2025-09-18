@@ -1,0 +1,22 @@
+name: release sync
+
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  notion:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./
+        id: notion
+        name: notion
+        with:
+          token: ${{ secrets.NOTION_TOKEN }}
+          database: ${{ secrets.NOTION_DATABASE_ID }}
+          name: Notion Release ${{ github.event.release.tag_name }}
+          tags: utils
+          body: ${{ github.event.release.body }}
+      - run: echo "${{ steps.notion.outputs.url }}"

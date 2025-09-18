@@ -1,0 +1,16 @@
+{
+  "singleQuote": true,
+  "semi": false,
+  "trailingComma": "none",
+  "arrowParens": "avoid",
+  "endOfLine": "auto",
+  "plugins": ["prettier-plugin-organize-imports"],
+  "overrides": [
+    {
+      "files": [".*rc"],
+      "options": {
+        "parser": "json"
+      }
+    }
+  ]
+}
