@@ -15,6 +15,7 @@
         ]
       }
     ],
+    "semantic-release-major-tag",
     "@semantic-release/github"
   ]
 }
